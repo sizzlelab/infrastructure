@@ -1,0 +1,13 @@
+Admins
+-------
+$ iam-usercreate -g Admins -k -v -u kmarkus
+$ iam-usercreate -g Admins -k -v -u jturunen
+$ iam-usercreate -g Admins -k -v -u avirolainen
+$ iam-usercreate -g Admins -k -v -u jmakkonen
+
+
+Robots
+-------
+$ iam-usercreate -g Robots -k -v -u backup
+$ iam-usercreate -g Robots -k -v -u monitor
+

@@ -1,0 +1,8 @@
+This directory holds information related to AWS Identity and Access Management (IAM).
+This is a set of groups, users and permissions for accessing AWS services.
+
+(Note this is different from OS users and groups on the actual servers)
+
+More information can be found:
+http://aws.amazon.com/iam/
+

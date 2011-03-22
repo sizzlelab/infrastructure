@@ -1,0 +1,9 @@
+{
+    "Statement":[{
+        /* TODO */
+        "Effect":"Deny",
+        "Action":"*",
+        "Resource":"*"
+        }
+    ]
+}

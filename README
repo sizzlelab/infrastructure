@@ -1,0 +1,9 @@
+Sizzlelab infrastructure repository
+--------------------------------------
+
+This repository holds various assets related to the configuration, deployment and management
+of server infrastructure required by various OtaSizzle and related projects.
+
+Currently the main server infrastructure is based on Amazon Web Services (AWS)
+http://aws.amazon.com/
+

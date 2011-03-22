@@ -1,0 +1,17 @@
+Admins:
+---------
+$ iam-groupcreate -g Admins
+($ iam-grouplistbypath)
+
+$ iam-groupuploadpolicy -g Admins -p AdminsGroupPolicy -f Admins.policy.json
+($ iam-grouplistpolicies -g Admins)
+
+
+Robots:
+---------
+$ iam-groupcreate -g Robots
+($ iam-grouplistbypath)
+
+$ iam-groupuploadpolicy -g Robots -p RobotsGroupPolicy -f Robots.policy.json
+($ iam-grouplistpolicies -g Robots)
+
