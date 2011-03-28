@@ -1,0 +1,177 @@
+Steps to create a base AMI for OtaSizzle,
+including an EBS volume specifically for the database.
+-------------------------------------------------------------------------------
+Konrad Markus <konker@gmail.com>
+
+Assumptions:
+- You have the ec2-tools set up and the correct X.509 cert/key configured to use them.
+    - You should be able to source ec2-tools-env.sh
+    - The following assumes that $EC2_URL is set correctly for the region you want.
+    - You have a ~/.aws directory where you can store keys, etc
+
+
+1) Create keypair for launching the instance named 'sizl-ubuntu1'
+    ec2-create-keypair sizl-ubuntu1 > ~/.aws/sizl-ubuntu1.pem
+    chmod 600 ~/.aws/sizl-ubuntu1.pem
+
+2) Create a security group named 'sizl-web'
+    export EC2_GROUP_NAME=sizl-web
+
+    ec2-create-group -d "Security Group for Sizl web facing application servers" $EC2_GROUP_NAME
+
+    /* these 'internal' permissions taken from the default security group */
+    ec2-authorize $EC2_GROUP_NAME -P tcp -p 0-65535 -o $EC2_GROUP_NAME
+    ec2-authorize $EC2_GROUP_NAME -P udp -p 0-65535 -o $EC2_GROUP_NAME
+    ec2-authorize $EC2_GROUP_NAME -P icmp -t '-1:-1' -o $EC2_GROUP_NAME
+
+    /* authorize ingress ports (ssh, http, https) */
+    ec2-authorize $EC2_GROUP_NAME -p 22
+    ec2-authorize $EC2_GROUP_NAME -p 80
+    ec2-authorize $EC2_GROUP_NAME -p 443
+
+3) Bring up an instance with:
+    - ubuntu EBS backed 10.10 32bit base AMI from Canonical
+        - see: http://uec-images.ubuntu.com/releases/10.10/release/
+    - using keypair 'sizl-ubuntu1'
+    - using security group 'sizl-web'
+    - in the eu-west-1b availability zone
+    - using instance type <instance.type>
+
+    ec2-run-instances ami-fb9ca98f -k sizl-ubuntu1 -g sizl-web -z eu-west-1b -t <instance.type>
+
+------------
+3b) Get host name and test ssh into server:
+    ec2-describe-instances
+    ...
+    ssh -i ~/.aws/sizl-ubuntu1.pem -l ubuntu ec2-XX-XXX-XX-XX.eu-west-1.compute.amazonaws.com
+------------
+
+4) Update server
+
+sudo apt-get update && sudo apt-get upgrade -y
+
+5) Install server software (remember to set mysql root password)
+
+sudo apt-get install -y git
+sudo apt-get install -y mysql-server
+sudo apt-get install -y libmysqlclient-dev
+sudo apt-get install -y xfsprogs
+
+sudo apt-get install -y apache2
+sudo apt-get install -y apache2-prefork-dev
+sudo apt-get install -y libapr1-dev
+sudo apt-get install -y libaprutil1-dev
+
+sudo apt-get install -y libssl-dev
+sudo apt-get install -y libcurl4-openssl-dev
+
+sudo apt-get install -y ruby
+sudo apt-get install -y ruby-dev
+sudo apt-get install -y rubygems
+
+sudo apt-get install -y imagemagick
+sudo apt-get install -y libmagickcore-dev
+#sudo apt-get install -y libmagickwand3
+sudo apt-get install -y libmagickwand-dev
+sudo apt-get install -y graphicsmagick-libmagick-dev-compat
+
+sudo apt-get install -y sphinxsearch
+
+5b) Set up passenger
+
+sudo gem install passenger --no-rdoc --no-ri
+sudo /var/lib/gems/1.8/bin/passenger-install-apache2-module
+
+sudo vi /etc/apache2/mods-available/passenger.load
+LoadModule passenger_module /var/lib/gems/1.8/gems/passenger-3.0.5/ext/apache2/mod_passenger.so
+
+sudo vi /etc/apache2/mods-available/passenger.conf
+<IfModule mod_passenger.c>
+   PassengerRoot /var/lib/gems/1.8/gems/passenger-3.0.5
+   PassengerRuby /usr/bin/ruby1.8
+</IfModule>
+
+# enable the module and restart apache
+cd /etc/apache2/mods-enabled
+sudo ln -s ../mods-available/passenger.conf .
+sudo ln -s ../mods-available/passenger.load .
+sudo apache2ctl restart
+
+
+5c) Install Bundler
+
+sudo gem install bundler --no-rdoc --no-ri
+
+--
+
+6) Create and attach EBS volume for the database
+    ec2-create-volume -z eu-west-1b -s 10
+(get isntance id using ec2-describe-instances)
+(get volume id using ec2-describe-volumes)
+
+    ec2-attach-volume -d /dev/sdh -i <i-XXXXXXXX> <vol-YYYYYYYY>
+
+
+7) Create an XFS filesystem for the database volume
+
+# add the xfs module to the kernel
+grep -q xfs /proc/filesystems || sudo modprobe xfs
+
+# make it into an xfs filesystem
+sudo mkfs.xfs /dev/sdh
+
+# add to fstab so it mounts automatically
+sudo vi /etc/fstab
+/dev/sdh        /data   xfs     noatime 0 0
+
+# create mount point and mount
+sudo mkdir -m 000 /data
+sudo mount /data
+
+
+7b) Configure mysql to use new volume:
+
+sudo stop mysql
+
+sudo mkdir /data/etc /data/lib /data/log
+
+# move mysql directories on to EBS volume
+sudo mv /etc/mysql     /data/etc/
+sudo mv /var/lib/mysql /data/lib/
+sudo mv /var/log/mysql /data/log/
+
+# re-create empty mysql directories to act as mount points
+sudo mkdir /etc/mysql
+sudo mkdir /var/lib/mysql
+sudo mkdir /var/log/mysql
+
+# mount EBS volume dirs on to empty mysql mount points
+sudo vi /etc/fstab
+/data/etc/mysql /etc/mysql     none bind
+/data/lib/mysql /var/lib/mysql none bind
+/data/log/mysql /var/log/mysql none bind
+
+sudo mount /etc/mysql
+sudo mount /var/lib/mysql
+sudo mount /var/log/mysql
+
+# bring the srever back up
+sudo start mysql
+
+8) Install snapshot tool:
+sudo add-apt-repository ppa:alestic
+sudo apt-get update
+sudo apt-get install ec2-consistent-snapshot
+
+
+9) Create AMI from snapshot of root volume:
+TODO?
+
+10) Take a snapshot of the root volume:
+TODO?
+
+11) Take a snapshot of the db volume:
+TODO
+
+
+

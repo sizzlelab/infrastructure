@@ -1,0 +1,5 @@
+ec2
+--------------------------------------------------------------------------------
+
+- cp ec2-tools-env.example.sh ec2-tools-env.sh
+- edit ec2-tools-env.sh to point to your X.509 certificate and private key

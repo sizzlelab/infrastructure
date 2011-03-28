@@ -1,0 +1,130 @@
+--in web console--
++ create X.509 certificate
++ save privatekey.pem and cert.pem into .aws
++ edit ec2-tools-env.sh to point to these
+--
+
+--with cli tools--
++ create an EC2 keypair:
+    ec2-create-keypair -U $EC2_URL <keypairname> > ~/.aws/keypairname.pem
+    chmod 600 $!
+(+ view keypairs:
+    ec2-describe-keypairs)
+(+ delete keypairs:
+    ec2-delete-keypair -U $EC2_URL <keypairname>)
+
++ create a new security group:
+    ec2-create-group -U $EC2_URL -d "DESCRIPTION" <groupname>
+(+ view groups:
+    ec2-describe-group)
+
+/* these 'internal' permissions taken from the default security group */
++ authorizre internal tcp:
+    ec2-authorize web-application -P tcp -p 0-65535 -o web-application
++ authorizre internal udp:
+    ec2-authorize web-application -P udp -p 0-65535 -o web-application
++ authorizre internal icmp:
+    ec2-authorize web-application -P icmp -t '-1:-1' -o web-application
+
++ authorize port 22 (ssh) ingress
+    ec2-authorize -U $EC2_URL <groupname> -p 22
++ authorize port 80 (http) ingress
+    ec2-authorize -U $EC2_URL <groupname> -p 80
++ authorize port 443 (https) ingress
+    ec2-authorize -U $EC2_URL <groupname> -p 443
+
+(+ authroize ICMP (ping)
+    ec2-authorize web-application -P icmp -t '-1:-1')
++ (authorize other for e.g. monitoring?
+    ???)
+
++ allocate an elastic ip address:
+    ec2-allocate-address -U $EC2_URL
+
++ bring up an instance with:
+    - ubuntu AMI as base 
+        - see: http://uec-images.ubuntu.com/releases/10.10/release/
+    - using keypair <keypairname>
+    - using security group <groupname>
+    - using isntacne type c1.medium
+
+    ec2-run-instances -U $EC2_URL ami-fb9ca98f -k <keypairname> -g <groupname> -t c1.medium
+
+(+ show instances:
+    ec2-describe-instances)
+
++ associate elastic ip to instance
+    ec2-associate-address -U $EC2_URL <ip address> -i <instance>
+(+ view addresses:
+    ec2-describe-addresses)
+(+ disassociate an addresses:
+    ec2-disassociate-address <ip address>)
+(+ de-allocate addresses:
+    ec2-release-address <ip address>)
+
+
+--on server--
+ssh -i ~/.aws/<keypairname>.pem ubuntu@ec2-46-137-14-90.eu-west-1.compute.amazonaws.com
+
+<install apt dependencies>
+<configure server software>
+<configure server users>
+<configure ssl certs>
+<...>
+
+--with cli tools--
+<take snapshot?>
+<clone ami -> sizl ami?>
+
+--with cli tools--
+<terminate instance>
+<unbind elastic ip>
+
+--with cli tools--
+<bring up instance using sizl ami? (or ebs snapshot?)>
+<bind elastic ip>
+
+--on commander--
+<create scripts for backups>
+<create cron jobs>
+<install and configure monitoring software? - nagios?, monit?, zenoss?>
+<create scripts for migrating DBs from OtaV>
+<create scripts for switching DNS?>
+
+==DB==
+http://aws.amazon.com/articles/1663?_encoding=UTF8&jiveRedirect=1
+http://alestic.com/2010/10/ec2-consistent-snapshot-035
+http://alestic.com/
+======
+http://serverfault.com/questions/183552/shrinking-amazon-ebs-volume-size
+
+
+================================================================================
+
+- can we use the EBS snapshot if we moved to a 64bit AMI
+    * do an experiment
+
+- should we have a (HIIT?) server outside of AWS to act as:
+    - monitor
+    - control center for cron jobs, deployment, backups
+        - keys/certs could be stored here rather than various keys on each admins local machines
+    (- could add another layer of security?
+        - would this add inconvenient inflexibilities?)
+
+    - could the "commander" be inside AWS? (micro instance?)
+        - could we argue for this by the same tokens as choosing AWS in the first place?
+
+- is there any benefit from moving the DB:
+    - to it's own EBS volume?
+    - to it's own machine?
+        - i.e. would two smalls, app server/db server be better than 1 medium?
+
+- can we increase caching significantly and move from a high-cpu to a high-memory instance?
+    - basically memcached
+        - redis?
+
+    - can this be done without starting again?
+        - i.e. terminate h-cpu and bring up h-mem?
+        * do an experiment
+
+================================================================================
