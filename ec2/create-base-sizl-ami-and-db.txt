@@ -39,11 +39,16 @@ Assumptions:
 
     ec2-run-instances ami-fb9ca98f -k sizl-ubuntu1 -g sizl-web -z eu-west-1b -t <instance.type>
 
+3a) Allocate and associate elastic IP address
+    ec2-allocate-address
+    ec2-describe-instances
+    ec2-associate-address 46.137.99.187 -i i-83be19f5
 ------------
 3b) Get host name and test ssh into server:
     ec2-describe-instances
     ...
     ssh -i ~/.aws/sizl-ubuntu1.pem -l ubuntu ec2-XX-XXX-XX-XX.eu-west-1.compute.amazonaws.com
+    ssh -i ~/.aws/sizl-ubuntu1.pem -l ubuntu 46.137.99.187
 ------------
 
 4) Update server
@@ -59,10 +64,13 @@ sudo apt-get install -y xfsprogs
 
 sudo apt-get install -y apache2
 sudo apt-get install -y apache2-prefork-dev
-sudo apt-get install -y libapr1-dev
-sudo apt-get install -y libaprutil1-dev
 
-sudo apt-get install -y libssl-dev
+## already installed at this point?
+#sudo apt-get install -y libapr1-dev
+#sudo apt-get install -y libaprutil1-dev
+#sudo apt-get install -y libssl-dev
+##
+
 sudo apt-get install -y libcurl4-openssl-dev
 
 sudo apt-get install -y ruby
@@ -83,13 +91,15 @@ sudo gem install passenger --no-rdoc --no-ri
 sudo /var/lib/gems/1.8/bin/passenger-install-apache2-module
 
 sudo vi /etc/apache2/mods-available/passenger.load
-LoadModule passenger_module /var/lib/gems/1.8/gems/passenger-3.0.5/ext/apache2/mod_passenger.so
+LoadModule passenger_module /var/lib/gems/1.8/gems/passenger-3.0.6/ext/apache2/mod_passenger.so
 
 sudo vi /etc/apache2/mods-available/passenger.conf
 <IfModule mod_passenger.c>
-   PassengerRoot /var/lib/gems/1.8/gems/passenger-3.0.5
+   PassengerRoot /var/lib/gems/1.8/gems/passenger-3.0.6
    PassengerRuby /usr/bin/ruby1.8
 </IfModule>
+
+# (check passenger versions of the above)
 
 # enable the module and restart apache
 cd /etc/apache2/mods-enabled
@@ -113,6 +123,7 @@ sudo gem install bundler --no-rdoc --no-ri
 
 
 7) Create an XFS filesystem for the database volume
+(see: http://aws.amazon.com/articles/1663?_encoding=UTF8&jiveRedirect=1)
 
 # add the xfs module to the kernel
 grep -q xfs /proc/filesystems || sudo modprobe xfs
@@ -173,5 +184,6 @@ TODO?
 11) Take a snapshot of the db volume:
 TODO
 
-
+12) deploy ASI
+cap deplot ASI?
 
