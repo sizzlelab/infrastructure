@@ -77,11 +77,20 @@ sudo apt-get install -y ruby
 sudo apt-get install -y ruby-dev
 sudo apt-get install -y rubygems
 
+# add gem bin dir to global path.
+# this is horrible but no other way has been yet found!
+# note: might be worth checking the dir with `gem env`
+##sudo vi /etc/profile.d/gem_bin_path.sh
+sudo vi /etc/environment
+---
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/var/lib/gems/1.8/bin"
+---
+
 sudo apt-get install -y imagemagick
 sudo apt-get install -y libmagickcore-dev
-#sudo apt-get install -y libmagickwand3
-sudo apt-get install -y libmagickwand-dev
+sudo apt-get install -y libmagickwand3
 sudo apt-get install -y graphicsmagick-libmagick-dev-compat
+sudo apt-get install -y libmagickwand-dev
 
 sudo apt-get install -y sphinxsearch
 
@@ -108,9 +117,10 @@ sudo ln -s ../mods-available/passenger.load .
 sudo apache2ctl restart
 
 
-5c) Install Bundler
-
+5c) Install Bundler and whenever and i8n
 sudo gem install bundler --no-rdoc --no-ri
+sudo gem install whenever --no-rdoc --no-ri
+sudo gem install i18n --no-rdoc --no-ri
 
 --
 
@@ -174,7 +184,87 @@ sudo add-apt-repository ppa:alestic
 sudo apt-get update
 sudo apt-get install ec2-consistent-snapshot
 
+# FIXME: should specify /bin/bash as the shell
+9) Add cos user
+sudo useradd cos
 
+# this seems dumb..
+sudo mkdir /home/cos
+sudo chwon cos.cos /home/cos
+
+# add to the admin group for sudo
+sudo usermod -G admin cos
+
+
+# create .ssh
+sudo mkdir /home/cos/.ssh
+sudo chown cos.cos /home/cos/.ssh
+sudo chmod 700 /home/cos/.ssh
+sudo vi /home/cos/.ssh/authorized_keys
+---ad public keys---
+sudo chmod 600 /home/cos/.ssh/authorized_keys
+
+9b) add /opt/asi directory
+sudo mkdir /opt/asi
+sudo chown cos.cos /opt/asi
+
+
+===log in as cos===
+10) install ASI manually into /opt/asi/
+cd /opt/asi
+mkdir releases shared
+cd /opt/asi/releases
+
+# note branch may not be needed..
+git clone -b rails3 git://github.com/sizzlelab/asi.git
+
+# prepare the shared directory
+cd /opt/asi/shared
+mkdir bundle config db log tmp
+mkdir db/sphinx
+cp ../../releases/manual/config/database.example.yml database.yml
+vi database.yml
+-- edit passwords --
+
+cp ../../releases/manual/config/config.example.yml config.yml
+vi config.yml
+-- edit appropriately --
+
+vi session_secret
+-- add secret --
+
+cd /opt/asi/releases/manual
+vi install.sql
+-- edit passwords --
+
+# install databases/users
+mysql -uroot -p < install.sql
+
+# production mode
+export RAILS_ENV=production
+
+# bundler
+/var/lib/gems/1.8/bin/bundle install --gemfile /opt/asi/releases/manual/Gemfile --path /opt/asi/shared/bundle --deployment --without development
+
+# db migrate
+cd /opt/asi/releases/manual
+/var/lib/gems/1.8/bin/rake db:migrate
+
+# symlinks
+ln -s /opt/asi/shared/config/database.yml /opt/asi/releases/manual/config/database.yml 
+ln -s /opt/asi/shared/config/config.yml /opt/asi/releases/manual/config/config.yml 
+ln -s /opt/asi/shared/config/session_secret /opt/asi/releases/manual/config/session_secret 
+rm -rf /opt/asi/releases/manual/log
+ln -s /opt/asi/shared/log /opt/asi/releases/manual/log
+ln -s /opt/asi/releases/manual /opt/asi/current
+
+# rapidocs (runs in test mode, so migration need to be run)
+cd /opt/asi/releases/manual
+export RAILS_ENV=test
+/var/lib/gems/1.8/bin/rake db:migrate
+script/rapidoc/generate
+
+/*
 9) Create AMI from snapshot of root volume:
 TODO?
 
@@ -184,6 +274,35 @@ TODO?
 11) Take a snapshot of the db volume:
 TODO
 
+XX) Add users?
+    - get public keys for users
+        - AV
+        - JM
+        - ST
+        - JT
+        - KM
+
+    - usernames same as Otv?
+        flastname
+    - make admin group sudoer
+    - add users to admin group
+    - remove password login
+        - could password be some kind of md5 of username by default?
+            - not v secure...
+                - or hash of username with salt that everyone shares
+    # where are my notes for this again? gdoc?
+
+    - cos user for deploy?
+        - double check how everyone can be cos (wrt to keys)
+
+    - or could we use the ubuntu user for deploy?
+        - no only I have the priv.key for ubuntu at the moment..
+            - what to do about that?
+                - store it somewhere?
+                - send it (somehow) to the others?
+                
+*/
+
 12) deploy ASI
-cap deplot ASI?
+cap deploy ASI?
 
