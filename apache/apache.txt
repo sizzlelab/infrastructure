@@ -1,0 +1,35 @@
+cd /etc/apache2/sites-available/
+sudo mv default default-orig
+sudo vi default
+---
+<VirtualHost *:80>
+    ServerName 46.137.99.187
+    DocumentRoot /opt/asi/current/public
+    <Directory opt/asi/current/public>
+        Allow from all
+        Options -MultiViews
+    </Directory>
+</VirtualHost>
+---
+
+
+- should the conf files be in a git repo?
+    - where would the git repo be?
+
+- what do we need in sites-available?
+    sizl.org
+
+    cos.sizl.org
+    cos.alpha.sizl.org
+    my.sizl.org
+
+    kassi.sizl.org
+    kassi.alpha.sizl.org
+    kassi.eu
+    www.kassi.eu
+    aalto.kassi.eu
+    login.kassi.eu
+
+    ressi.alpha.sizl.org
+    weekreport.alpha.sizl.org
+
