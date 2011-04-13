@@ -201,8 +201,34 @@ sudo mkdir /home/cos/.ssh
 sudo chown cos.cos /home/cos/.ssh
 sudo chmod 700 /home/cos/.ssh
 sudo vi /home/cos/.ssh/authorized_keys
----ad public keys---
+---add public keys---
 sudo chmod 600 /home/cos/.ssh/authorized_keys
+
+# add other users:
+kmarkus
+jturunen
+sktoiva
+amvirola
+jomakko2
+
+# for each one:
+sudo adduser <username>
+...
+
+sudo usermod -G admin <username>
+
+sudo su - <username>
+cd
+mkdir .ssh
+#sudo chown <username>.<username> /home/<username>/.ssh
+chmod 700 .ssh
+vi .ssh/authorized_keys
+---add public keys---
+chmod 600 .ssh/authorized_keys
+
+
+
+
 
 9b) add /opt/asi directory
 sudo mkdir /opt/asi
@@ -274,33 +300,6 @@ TODO?
 11) Take a snapshot of the db volume:
 TODO
 
-XX) Add users?
-    - get public keys for users
-        - AV
-        - JM
-        - ST
-        - JT
-        - KM
-
-    - usernames same as Otv?
-        flastname
-    - make admin group sudoer
-    - add users to admin group
-    - remove password login
-        - could password be some kind of md5 of username by default?
-            - not v secure...
-                - or hash of username with salt that everyone shares
-    # where are my notes for this again? gdoc?
-
-    - cos user for deploy?
-        - double check how everyone can be cos (wrt to keys)
-
-    - or could we use the ubuntu user for deploy?
-        - no only I have the priv.key for ubuntu at the moment..
-            - what to do about that?
-                - store it somewhere?
-                - send it (somehow) to the others?
-                
 */
 
 12) deploy ASI
