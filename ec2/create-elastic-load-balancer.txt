@@ -1,0 +1,54 @@
+# create self-signed certificate (follow these instructions http://www.akadia.com/services/ssh_test_certificate.html):
+openssl genrsa -des3 -out server.key 1024
+openssl req -new -key server.key -out server.csr
+cp server.key server.key.org
+openssl rsa -in server.key.org -out server.key
+openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
+
+# create /etc/apache2/sites-available/asi with:
+---------------------------------------------------
+
+    <VirtualHost *:7443>
+        ServerName asi.janiturunen.com
+        SSLEngine On
+        SSLOptions +StdEnvVars
+        SSLCertificateFile /etc/ssl/certs/asi.janiturunen.com.crt
+        SSLCertificateKeyFile /etc/ssl/private/asi.janiturunen.com.key 
+        DocumentRoot /opt/asi/public
+        <Directory /opt/asi/public>
+            Allow from all
+            Options -MultiViews
+        </Directory>
+    </VirtualHost>
+
+    <VirtualHost *:80>
+        ServerName asi.janiturunen.com
+        DocumentRoot /opt/asi/public
+        <Directory /opt/asi/public>
+            Allow from all
+            Options -MultiViews
+        </Directory>
+    </VirtualHost>
+    
+---------------------------------------------------
+
+# open ports with sizl-web security group:
+ec2-authorize sizl-web -p 7443
+ec2-authorize sizl-web -p 8443
+
+# set up an elastic load balancer
+elb-create-lb elb-cos-sizl-org --headers --listener "protocol=http,lb-port=80,instance-port=80" --listener "protocol=tcp,lb-port=443,instance-port=7443" --availability-zones eu-west-1b
+
+# create CNAME record for needed domain DNS
+asi.janiturunen.com -> elb-cos-sizl-org-1317648468.eu-west-1.elb.amazonaws.com
+
+# register elb with instance
+elb-register-instances-with-lb elb-cos-sizl-org --instances i-83be19f5
+
+# for Kassi
+
+# create load balancer
+elb-create-lb elb-login-kassi-eu --headers --listener "protocol=http,lb-port=80,instance-port=80" --listener "protocol=tcp,lb-port=443,instance-port=8443" --availability-zones eu-west-1b
+
+# register load balancer with instance
+elb-register-instances-with-lb elb-login-kassi-eu --instances i-83be19f5
