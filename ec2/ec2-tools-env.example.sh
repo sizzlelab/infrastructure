@@ -10,9 +10,15 @@ export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
 export EC2_HOME=~/bin/ec2-api-tools-1.4.1.2
 export PATH=$PATH:$EC2_HOME/bin
 
+# ELB home and path
+export AWS_ELB_HOME=~/bin/ElasticLoadBalancing-1.0.11.1
+export PATH=$PATH:$AWS_ELB_HOME/bin
+
 # EC2 access credentials
 export EC2_PRIVATE_KEY=~/.aws/pk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.pem
 export EC2_CERT=~/.aws/cert-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.pem
 
 # set the european endpoint
 export EC2_URL=https://ec2.eu-west-1.amazonaws.com
+export AWS_ELB_URL=https://elasticloadbalancing.eu-west-1.amazonaws.com
+
