@@ -184,13 +184,9 @@ sudo add-apt-repository ppa:alestic
 sudo apt-get update
 sudo apt-get install ec2-consistent-snapshot
 
-# FIXME: should specify /bin/bash as the shell
-9) Add cos user
-sudo useradd cos
 
-# this seems dumb..
-sudo mkdir /home/cos
-sudo chwon cos.cos /home/cos
+9) Add cos user
+useradd -d /home/cos -s /bin/bash -m cos
 
 # add to the admin group for sudo
 sudo usermod -G admin cos
@@ -305,3 +301,19 @@ TODO
 12) deploy ASI
 cap deploy ASI?
 
+
+# INSTALL KASSI
+
+13) Add kassi user
+useradd -d /home/kassi -s /bin/bash -m kassi
+
+# add to the admin group for sudo
+sudo usermod -G admin kassi
+
+# create .ssh
+sudo mkdir /home/kassi/.ssh
+sudo chown kassi.kassi /home/kassi/.ssh
+sudo chmod 700 /home/kassi/.ssh
+sudo vi /home/kassi/.ssh/authorized_keys
+---add public keys---
+sudo chmod 600 /home/cos/.ssh/authorized_keys
