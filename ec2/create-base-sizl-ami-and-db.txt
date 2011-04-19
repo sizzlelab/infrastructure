@@ -317,3 +317,67 @@ sudo chmod 700 /home/kassi/.ssh
 sudo vi /home/kassi/.ssh/authorized_keys
 ---add public keys---
 sudo chmod 600 /home/cos/.ssh/authorized_keys
+
+14) Create directory for Kassi
+sudo mkdir /opt/kassi
+sudo chown kassi.kassi /opt/kassi
+
+15) Add database and kassi mysql user
+
+mysql -u root -p
+
+CREATE DATABASE kassi_production CHARACTER SET utf8 COLLATE utf8_general_ci;
+GRANT all privileges ON kassi_production.* TO 'kassi'@'localhost' IDENTIFIED BY 'password_here';
+
+
+16) Install with Capistrano
+
+# set correct parameters in deploy.rb for the server:
+set :host, "46.137.99.187"
+set :user, "kassi"
+set :deploy_to, "/opt/kassi"
+
+# NOTE: remember to add extra parameters to cap commands if needed (e.g. bundle exec cap deploy DEPLOY_ENV=amazon BRANCH=communities)
+
+# create releases and shared dirs with cap
+cap deploy:setup
+
+# check that permissions are ok
+cap deploy:check
+
+# Create some dirs manually (as kassi user)
+mkdir vendor_bundle
+
+# Try installing the code (it should fail because no config.yml found, however the code gets uploaded to the server)
+cap deploy
+
+# Fix config.yml and databse.yml
+cp /opt/kassi/current/config/config.example.yml /opt/kassi/shared/system/config.yml
+cp /opt/kassi/current/config/database.example.yml /opt/kassi/shared/system/databse.yml
+
+vi database.yml # Add at least password to production db settings
+vi config.yml # Look it through and set correct values. Probably helpful to use existing production server config.yml as a model here
+
+# Build the db structure
+cd /opt/kassi/current
+rake RAILS_ENV=production db:schema:load
+
+# Run cap deploy again (this time it should succeed)
+cap deploy
+
+17) Configure Apache
+
+vi /etc/apache2/sites-available/kassi
+cd /etc/apache2/sites-enabled
+ln -s ../sites-available/kassi
+
+# and restart it afterwards
+sudo /etc/init.d/apache2 restart
+
+18) Install memcached
+
+sudo apt-get install memcached
+
+19) copy db and shared/system/images content from old server if needed
+
+
