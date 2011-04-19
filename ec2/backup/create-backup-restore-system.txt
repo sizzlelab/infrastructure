@@ -1,0 +1,48 @@
+# make sure ec2-api-tools are installed
+
+# as cos user:
+mkdir ~/.aws
+chmod 700 .aws
+
+# scp X509 certificate and private key to server
+scp .aws/cert-ATW57ZBEHKPMQNTZNWTF7XORQPREVTCE.pem cos@46.137.99.187:/home/cos/.aws
+scp .aws/pk-ATW57ZBEHKPMQNTZNWTF7XORQPREVTCE.pem cos@46.137.99.187:/home/cos/.aws
+
+# set needed env in .profile 
+----
+# Set up the necessary environment for ec2 tools to work
+# source this file into your current shell
+#
+# see: http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/
+
+# JAVA
+export JAVA_HOME=/usr/lib/jvm/java-6-openjdk/
+
+# EC2 access credentials
+export EC2_PRIVATE_KEY=~/.aws/pk-ATW57ZBEHKPMQNTZNWTF7XORQPREVTCE.pem
+export EC2_CERT=~/.aws/cert-ATW57ZBEHKPMQNTZNWTF7XORQPREVTCE.pem
+
+# set the european endpoint
+export EC2_URL=https://ec2.eu-west-1.amazonaws.com
+----
+
+
+# create a local mysql user for making backups
+CREATE USER 'snapshot'@'localhost' IDENTIFIED BY 'some_pass';
+GRANT ALL PRIVILEGES ON *.* TO 'snapshot'@'localhost';
+
+# create mysql credentials file
+mkdir ~/.mysql
+chmod 700 !$
+vi ~/.mysql/ec2-snapshot-mysql
+--
+[client]
+host=localhost
+user=snapshot
+password=some_pass
+---
+chmod 600 !$
+
+# example invocation
+sudo ec2-consistent-snapshot --aws-credentials-file ~/.aws/sizl-aws@hiit.fi --region eu-west-1 --freeze-filesystem /data --mysql --mysql-defaults-file ~/.mysql/ec2-snapshot-mysql.cnf vol-f0109d99
+
