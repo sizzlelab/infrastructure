@@ -46,3 +46,13 @@ chmod 600 !$
 # example invocation
 sudo ec2-consistent-snapshot --aws-credentials-file ~/.aws/sizl-aws@hiit.fi --region eu-west-1 --freeze-filesystem /data --mysql --mysql-defaults-file ~/.mysql/ec2-snapshot-mysql.cnf vol-f0109d99
 
+# install cron job for daily backup under cos user
+# Note 23:10 UTC is chosen as it would be approx 16:10 on US west coast 
+crontab -e
+---
+MAILTO="konker@gmail.com"
+
+# daily backup
+23 10 * * * /home/cos/bin/daily-backup.sh
+---
+

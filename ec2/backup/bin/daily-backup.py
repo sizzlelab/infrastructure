@@ -68,7 +68,6 @@ def main(weekday):
         data = read_cmd(["ec2-describe-tags"])
         tags = parse_tags(data)
     except Exception, ex:
-        # notify?
         logging.error("abort: could not get tags: %s" % ex)
         logging.info('--- daily-backup END (ABORT) ---')
         exit(-1)
@@ -127,7 +126,6 @@ def read_cmd(args, result_re=None):
     except Exception, ex:
         logging.error("abort: read_cmd failed: %s" % ex)
         logging.info('--- daily-backup END (ABORT) ---')
-        # notify?
         exit(-2)
 
 
@@ -138,7 +136,6 @@ def exec_cmd(args):
     except Exception, ex:
         logging.error("abort: exec_cmd failed: %s" % ex)
         logging.info('--- daily-backup END (ABORT) ---')
-        # notify?
         exit(-3)
 
 
@@ -176,7 +173,7 @@ if __name__ == '__main__':
 
     # weekday is today, or optionallly can be overidden
     weekday = date.today().weekday()
-    if len(sys.argv) > 0:
+    if len(sys.argv) > 1:
         try:
             weekday = int(sys.argv[1])
             if weekday < 0 or weekday > 6:
