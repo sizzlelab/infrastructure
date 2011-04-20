@@ -84,6 +84,8 @@ sudo apt-get install -y ec2-api-tools
 
 sudo apt-get install -y ntp
 
+sudo apt-get install -y postfix
+
 # add gem bin dir to global path.
 # this is horrible but no other way has been yet found!
 # note: might be worth checking the dir with `gem env`
@@ -388,3 +390,6 @@ sudo apt-get install memcached
 19) copy db and shared/system/images content from old server if needed
 
 
+---
+TODO:
+- configure postfix
