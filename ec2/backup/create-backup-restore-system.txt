@@ -56,3 +56,31 @@ MAILTO="konker@gmail.com"
 23 10 * * * /home/cos/bin/daily-backup.sh
 ---
 
+
+# restore
+restore.py -h
+
+Usage: restore.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -p RESTORE_PERIOD, --restore-period=RESTORE_PERIOD
+                        Which backup to restore to, e.g. "Mon", "Tue",
+                        "Weekly1", etc
+  -t INSTANCE_TYPE, --instance-type=INSTANCE_TYPE
+                        EC2 instance type for the restored instance, e.g.
+                        "c1.medium"
+  -i IP_ADDRESS, --ip-address=IP_ADDRESS
+                        IP address which will be associated with the new
+                        instance. Probably the elastic IP address of the
+                        failed instance.
+
+      
+This will:
+    - create an AMI from the sys snapshot
+    - start an instance of type INSTANCE_TYPE using this ami
+    - create a new volume from the dat snapshot
+    - attach this new volume to the new instance as /dev/sdh
+    - associate IP_ADDRESS with the new instance
+
+It is left as a manual task to the sysadmin to terminate/delete uneeded resources after this has completed, or in the case that the restore fails or is aborted.

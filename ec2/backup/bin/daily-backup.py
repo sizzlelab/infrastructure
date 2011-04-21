@@ -57,7 +57,7 @@ TYPE_SYS = 1
 VOL_IDS = ['vol-f0109d99', 'vol-560a873f']
 TYPE_PREFIXES = ['dat-', 'sys-']
 
-# metadat tag constants
+# metadata tag constants
 META_TAG_NAME = 'Name'
 META_TAG_PREFIX = 'bak-'
 
@@ -105,6 +105,8 @@ def main(weekday):
 def take_snapshot(vol_type, tag):
     if vol_type == TYPE_SYS:
         snap_id = read_cmd(["sudo", "ec2-consistent-snapshot", "--aws-credentials-file", "/home/cos/.aws/sizl-aws@hiit.fi", "--region", "eu-west-1", VOL_IDS[TYPE_SYS]], '^snap-[0-9a-z]+')
+        #snap_id = read_cmd(["ec2-create-image", CURRENT_INSTANCE_ID, "-n", tag, "-d", "Backup AMI image", "--no-reboot"], 'IMAGE\tami-[0-9a-z]+')
+        #snap_id = snap_id.strip().split("\t")[-1]
     else:
         snap_id = read_cmd(["sudo", "ec2-consistent-snapshot", "--aws-credentials-file", "/home/cos/.aws/sizl-aws@hiit.fi", "--region", "eu-west-1", "--freeze-filesystem", "/data", "--mysql", "--mysql-defaults-file", "/home/cos/.mysql/ec2-snapshot-mysql.cnf", VOL_IDS[TYPE_DAT]], '^snap-[0-9a-z]+')
 
@@ -112,7 +114,6 @@ def take_snapshot(vol_type, tag):
 
     # attach the tag
     exec_cmd(["ec2-create-tags", snap_id.strip(), "--tag", "%s=%s" % (META_TAG_NAME, tag)])
-
 
 def read_cmd(args, result_re=None):
     try:
@@ -155,16 +156,17 @@ def parse_tags(data):
             next
 
         fields = line.split('\t')
-        if fields[0] == 'TAG' and fields[1] == 'snapshot':
-            if fields[3] == META_TAG_NAME and fields[4].startswith(META_TAG_PREFIX):
-                ret[fields[4]] = fields[2]
+        if fields[0] == 'TAG':
+            if fields[1] == 'snapshot' or fields[1] == 'image':
+                if fields[3] == META_TAG_NAME and fields[4].startswith(META_TAG_PREFIX):
+                    ret[fields[4]] = fields[2]
 
     return ret
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
-                        # basically ../daily-backup.log relative to this file
+                        # basically ../log/daily-backup.log relative to this file
                         filename=os.path.normpath(os.path.join(os.path.dirname(__file__), os.path.join('..', 'log', 'daily-backup.log'))),
                         format='%(asctime)s [%(threadName)s] %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
