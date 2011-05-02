@@ -170,8 +170,9 @@ Cmnd_Alias      SHUTDOWN_CMDS = /sbin/shutdown
 
 ...
 
-# cos may exec shutdown commands as root without a password
-cos ALL= NOPASSWD: SHUTDOWN_CMDS
+# admins may exec shutdown commands as root without a password
+%admin ALL=(ALL) NOPASSWD: SHUTDOWN_CMDS
+
 ---
 
 
@@ -190,6 +191,10 @@ ec2-ami-tools/bin/ec2-bundle-vol -u 7747-2178-7864 -c /home/cos/.aws/cert-ATW57Z
 # register the ami
 ec2-register sizl-ami-dumper/image.manifest.xml
 IMAGE   ami-9399aee7
+        ami-1b7e486f
+
+# start the dumper
+ec2-run-instances ami-9399aee7 -k sizl-ubuntu1 -g sizl-web -z eu-west-1b -t m1.small
 
 
 # ------------------------------------------------------------------------------

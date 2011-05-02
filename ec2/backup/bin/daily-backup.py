@@ -61,6 +61,8 @@ TYPE_PREFIXES = ['dat-', 'sys-']
 META_TAG_NAME = 'Name'
 META_TAG_PREFIX = 'bak-'
 
+DUMPER_AMI_ID = 'ami-1b7e486f'
+
 
 def main(weekday):
     # get information about current tags
@@ -72,8 +74,7 @@ def main(weekday):
         logging.info('--- daily-backup END (ABORT) ---')
         exit(-1)
 
-    # do backup
-    snapshot_ids = []
+    # do backup [FIXME: at the moment just TYPE_DAT]
     for vol_type in [TYPE_DAT, TYPE_SYS]:
         today_tag = get_tag(weekday, vol_type)
         logging.info("Making snapshot for %s: %s" % (vol_type, today_tag))
@@ -99,34 +100,10 @@ def main(weekday):
                 exec_cmd(["ec2-delete-snapshot", tags[today_tag]])
 
         # create new snapshot and add today's tag
-        snapshot_ids[vol_type] = take_snapshot(vol_type, today_tag)
+        take_snapshot(vol_type, today_tag)
 
-
-    # register the sys snapshot as an AMI
-    logging.info("Registering AMI from sys snapshot %s.." % sys_snapshot_id)
-    ts =  time.strftime('%Y-%m-%d %H.%M.%S', time.gmtime())
-    ami_id = read_cmd(["ec2-register", "--root-device-name", "/dev/sda1", "--kernel", DEFAULT_KERNEL_ID, "-n", "Restored from %s at %s" % (sys_snapshot_id, ts), "-s", sys_snapshot_id], 'IMAGE\tami-[0-9a-z]+')
-    ami_id = ami_id.strip().split("\t")[-1]
-
-
-    # create a volume from the dat backup
-
-    # bring up an instance with dat vol attached as /data
-
-    # execute dump (how?)
-        # ssh into new instance as cos
-        # run ~/bin/dump.sh
-            # create dump
-            # send to S3
-            # shutdown
-
-    # move dump to s3
-
-    # terminate instance
-
-    # remove dat vol
-
-    # remove sys ami
+    # start up a dumper instance
+    exec_cmd(["ec2-run-instances", DUMPER_AMI_ID, "-k", "sizl-ubuntu1", "-g", "sizl-web", "-z", "eu-west-1b", "-t", "m1.small"])
 
 
 #--- helpers --
@@ -142,7 +119,6 @@ def take_snapshot(vol_type, tag):
 
     # attach the tag
     exec_cmd(["ec2-create-tags", snap_id.strip(), "--tag", "%s=%s" % (META_TAG_NAME, tag)])
-    return snap_id.strip()
 
 def read_cmd(args, result_re=None):
     try:

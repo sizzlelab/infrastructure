@@ -130,7 +130,7 @@ def main(restore_period, instance_type, ip_address):
     ami_id = read_cmd(["ec2-register", "--root-device-name", "/dev/sda1", "--kernel", DEFAULT_KERNEL_ID, "-n", "Restored from %s at %s" % (sys_snapshot_id, ts), "-s", sys_snapshot_id], 'IMAGE\tami-[0-9a-z]+')
     ami_id = ami_id.strip().split("\t")[-1]
 
-    # bring up the new instance
+    # bring up the new instance, also with the /dev/sdh volume
     logging.info("Bringing up new instance..")
     instance_id_re = 'INSTANCE\ti-[0-9a-z]+' 
     data = read_cmd(["ec2-run-instances", ami_id, "-k", DEFAULT_KEYPAIR, "-g", DEFAULT_GROUP, "-z", DEFAULT_REGION, "-t", instance_type], instance_id_re)
