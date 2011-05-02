@@ -56,7 +56,143 @@ MAILTO="konker@gmail.com"
 23 10 * * * /home/cos/bin/daily-backup.sh
 ---
 
+# create database dumper slave
+# Ubuntu 10.10 32bit instance backed ami: ami-7e5c690a
+ec2-run-instances ami-7e5c690a -k sizl-ubuntu1 -g sizl-web -z eu-west-1b -t m1.small
 
+sudo apt-get update && sudo apt-get upgrade -y
+
+# enable multiverse in /etc/apt/sources.list
+...
+
+sudo apt-get install -y git
+sudo apt-get install -y mysql-server
+sudo apt-get install -y libmysqlclient-dev
+sudo apt-get install -y ntp
+sudo apt-get install -y ec2-api-tools
+sudo apt-get install -y ruby
+sudo apt-get install -y postfix
+
+# add a cos user
+sudo adduser cos
+...
+
+# add cos user to admin group
+sudo usermod -G admin cos
+
+# create .ssh
+sudo mkdir /home/cos/.ssh
+sudo chown cos.cos /home/cos/.ssh
+sudo chmod 700 /home/cos/.ssh
+sudo vi /home/cos/.ssh/authorized_keys
+---add public keys---
+sudo chmod 600 /home/cos/.ssh/authorized_keys
+sudo chown cos.cos /home/cos/.ssh/authorized_keys
+
+
+# install S3cmd
+# see: http://s3tools.org/repositories#note-deb
+wget -O- -q http://s3tools.org/repo/deb-all/stable/s3tools.key | sudo apt-key add -
+sudo wget -O/etc/apt/sources.list.d/s3tools.list http://s3tools.org/repo/deb-all/stable/s3tools.list
+sudo apt-get update && sudo apt-get install s3cmd
+
+# configure s3cmd (creates ~/.s3cfg)
+s3cmd --configure
+
+# install AWS AMI tools
+# see: http://aws.amazon.com/developertools/368?_encoding=UTF8&jiveRedirect=1
+wget http://s3.amazonaws.com/ec2-downloads/ec2-ami-tools.zip
+# unzip and rename unzipped dir to ec2-ami-tools
+
+
+# create .aws (log in as cos)
+mkdir .aws
+cd .aws
+-- copy over x509 cert and pk from main server ---
+chmod 600 *
+chmod 700 .
+
+# add ec2 stuff to .profile
+---
+# JAVA
+export JAVA_HOME=/usr/lib/jvm/java-6-openjdk/
+
+# EC2 access credentials
+export EC2_PRIVATE_KEY=~/.aws/pk-ATW57ZBEHKPMQNTZNWTF7XORQPREVTCE.pem
+export EC2_CERT=~/.aws/cert-ATW57ZBEHKPMQNTZNWTF7XORQPREVTCE.pem
+export AWS_CREDENTIALS=~/.aws/sizl-aws@hiit.fi
+
+# EC2 AMI tools
+export EC2_AMITOOL_HOME=~/ec2-ami-tools
+
+# set the european endpoint
+export EC2_URL=https://ec2.eu-west-1.amazonaws.com
+----
+
+# create bin directory
+mkdir bin
+
+# edit /etc/rc.local
+sudo vi /etc/rc.local 
+--
+su - cos -c "/home/cos/bin/dump-exec.sh"
+exit 0
+--
+
+# create dumper mysql user with appropriate permissions
+CREATE USER 'dumper'@'localhost' IDENTIFIED BY 'XXX';
+GRANT REPLICATION CLIENT, LOCK TABLES, SELECT, SUPER ON . TO 'dumper'@'localhost' IDENTIFIED BY 'XXX';
+FLUSH PRIVILEGES;
+
+
+# create a ~/.my.cnf
+---
+[client]
+host=localhost
+user=dumper
+password=<password>
+---
+chmod 600 .my.cnf
+
+# create S3 bucket named sizl-db-dumps (using web ui)
+#..
+
+# create dump scripts
+#
+
+
+# allow cos to shutdown without password
+sudo visudo
+----
+
+# Cmnd alias specification
+Cmnd_Alias      SHUTDOWN_CMDS = /sbin/shutdown
+
+...
+
+# cos may exec shutdown commands as root without a password
+cos ALL= NOPASSWD: SHUTDOWN_CMDS
+---
+
+
+# bundle the ami
+# create bin/create-bundle.sh
+---
+#!/bin/bash
+
+. /home/cos/.profile
+ec2-ami-tools/bin/ec2-bundle-vol -u 7747-2178-7864 -c /home/cos/.aws/cert-ATW57ZBEHKPMQNTZNWTF7XORQPREVTCE.pem -k /home/cos/.aws/pk-ATW57ZBEHKPMQNTZNWTF7XORQPREVTCE.pem -r i386 -d /mnt -e /mnt
+---
+
+# upload the ami
+ ec2-ami-tools/bin/ec2-upload-bundle -b sizl-ami-dumper -a $AWSID -s $AWSSECRET -m /mnt/image.manifest.xml
+
+# register the ami
+ec2-register sizl-ami-dumper/image.manifest.xml
+IMAGE   ami-9399aee7
+
+
+# ------------------------------------------------------------------------------
 # restore
 restore.py -h
 

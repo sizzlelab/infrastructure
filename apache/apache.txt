@@ -33,3 +33,25 @@ sudo vi default
     ressi.alpha.sizl.org
     weekreport.alpha.sizl.org
 
+    ossi.sizl.org
+    ossi.alpha.sizl.org
+
+- virtual hosts
+    - try editing /etc/hosts
+        - locally
+        - also on the server for e.g. kassi -> asi
+
+
+SSL
+---
+    - which certificates do we need?
+    - where should they reside on the server?
+    - apache configuration?
+    - NOTE!!!!
+        - ec2 instances cannot have more than one IP address assigned to them
+            - this means that we cannot have name-based virtual host that need SSL
+
+        - http://en.wikipedia.org/wiki/Server_Name_Indication
+        - 1 elb load balancer per domain that needs SSL
+            - http://elwoodicious.com/2009/12/23/using-elb-to-serve-multiple-domains-over-ssl-on-ec2-for-giggles/
+
