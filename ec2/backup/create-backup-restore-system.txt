@@ -58,7 +58,8 @@ MAILTO="konker@gmail.com"
 
 # create database dumper slave
 # Ubuntu 10.10 32bit instance backed ami: ami-7e5c690a
-ec2-run-instances ami-7e5c690a -k sizl-ubuntu1 -g sizl-web -z eu-west-1b -t m1.small
+# Ubuntu 10.10 32bit ebs backed ami: ami-038bbc77
+ec2-run-instances ami-038bbc77 -k sizl-ubuntu1 -g sizl-web -z eu-west-1b -t m1.small
 
 sudo apt-get update && sudo apt-get upgrade -y
 
@@ -72,6 +73,7 @@ sudo apt-get install -y ntp
 sudo apt-get install -y ec2-api-tools
 sudo apt-get install -y ruby
 sudo apt-get install -y postfix
+sudo apt-get install -y unzip
 
 # add a cos user
 sudo adduser cos
@@ -141,7 +143,7 @@ exit 0
 
 # create dumper mysql user with appropriate permissions
 CREATE USER 'dumper'@'localhost' IDENTIFIED BY 'XXX';
-GRANT REPLICATION CLIENT, LOCK TABLES, SELECT, SUPER ON . TO 'dumper'@'localhost' IDENTIFIED BY 'XXX';
+GRANT REPLICATION CLIENT, LOCK TABLES, SELECT, SUPER ON *.* TO 'dumper'@'localhost' IDENTIFIED BY 'XXX';
 FLUSH PRIVILEGES;
 
 
@@ -194,7 +196,7 @@ IMAGE   ami-9399aee7
         ami-1b7e486f
 
 # start the dumper
-ec2-run-instances ami-9399aee7 -k sizl-ubuntu1 -g sizl-web -z eu-west-1b -t m1.small
+ec2-run-instances ami-1b7e486f -k sizl-ubuntu1 -g sizl-web -z eu-west-1b -t m1.small
 
 
 # ------------------------------------------------------------------------------
