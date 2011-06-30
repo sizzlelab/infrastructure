@@ -229,9 +229,6 @@ sudo apache2ctl restart
 
 sudo apt-get install memcached
 
-19) copy db and shared/system/images content from old server if needed
+19) copy db and shared/system/images content and log file from old server if needed
 
-
----
-TODO:
-- configure postfix
+20) Set up automatic backup: http://www.problogdesign.com/how-to/automatic-amazon-s3-backups-on-ubuntu-debian/
