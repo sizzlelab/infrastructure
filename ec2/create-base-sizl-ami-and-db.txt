@@ -363,9 +363,9 @@ mkdir vendor_bundle
 # Try installing the code (it should fail because no config.yml found, however the code gets uploaded to the server)
 cap deploy
 
-# Fix config.yml and databse.yml
+# Fix config.yml and database.yml
 cp /opt/kassi/current/config/config.example.yml /opt/kassi/shared/system/config.yml
-cp /opt/kassi/current/config/database.example.yml /opt/kassi/shared/system/databse.yml
+cp /opt/kassi/current/config/database.example.yml /opt/kassi/shared/system/database.yml
 
 vi database.yml # Add at least password to production db settings
 vi config.yml # Look it through and set correct values. Probably helpful to use existing production server config.yml as a model here
