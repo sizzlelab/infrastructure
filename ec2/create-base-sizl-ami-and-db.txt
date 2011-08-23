@@ -24,10 +24,11 @@ Assumptions:
     ec2-authorize $EC2_GROUP_NAME -P udp -p 0-65535 -o $EC2_GROUP_NAME
     ec2-authorize $EC2_GROUP_NAME -P icmp -t '-1:-1' -o $EC2_GROUP_NAME
 
-    /* authorize ingress ports (ssh, http, https, mysql) */
+    /* authorize ingress ports (ssh, http, https, smtp, mysql) */
     ec2-authorize $EC2_GROUP_NAME -p 22
     ec2-authorize $EC2_GROUP_NAME -p 80
     ec2-authorize $EC2_GROUP_NAME -p 443
+    ec2-authorize $EC2_GROUP_NAME -p 25
     ec2-authorize $EC2_GROUP_NAME -p 3306 -s 10.0.0.0/8
 
 3) Bring up an instance with:

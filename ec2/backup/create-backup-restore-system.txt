@@ -48,12 +48,13 @@ sudo ec2-consistent-snapshot --aws-credentials-file ~/.aws/sizl-aws@hiit.fi --re
 
 # install cron job for daily backup under cos user
 # Note 23:10 UTC is chosen as it would be approx 16:10 on US west coast 
-crontab -e
+# NOTE: add this to /etc/crontab
+#crontab -e
 ---
-MAILTO="konker@gmail.com"
+MAILTO="sizl-aws@hiit.fi"
 
 # daily backup
-23 10 * * * /home/cos/bin/daily-backup.sh
+23 10 * * * cos /home/cos/bin/daily-backup.sh
 ---
 
 # create database dumper slave

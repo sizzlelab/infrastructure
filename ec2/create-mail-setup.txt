@@ -1,0 +1,36 @@
+Create mail setup
+----------------------
+
+sudo apt-get install postfix -y
+sudo apt-get install opendkim -y
+
+configure opendkim
+------------------
+http://www.opendkim.org/opendkim-README
+
+selector: 05-2011
+
+$ opendkim-genkey -s 05-2011 -d mail.sizl.org -t
+
+# add TXT record to DNS zone file
+05-2011._domainkey.mail.sizl.org. IN TXT "v=DKIM1; g=*; k=rsa; t=y; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDHFFl63zeiou1Jeumj9ZZdCEe2q2tmlCcjsbCjlV7sI118yxe04PA4IcSja4644QIZdcgXqF9YDlJqHOEab1EMjeIS21W6py19mEeLB2bWqAbEgUoN892/XBTc2q9xugDETzZ6TABRARscw6O2GR8/3gHTU8ZlGy1eQ4M4/0Y2JQIDAQAB"
+
+
+
+# move private key somewhere safe
+$ sudo mkdir /etc/mail
+$ sudo mkdir /etc/mail/dkim
+$ sudo cp 05-2011.private /etc/mail/dkim
+# TODO: set owner/permissions
+
+# SOCKET spec from /etc/default/opendkim
+SOCKET="inet:8891@localhost" # listen on loopback on port 8891 - Ubuntu default
+
+
+# Ad SPF record
+# http://old.openspf.org/wizard.html?mydomain=mail.sizl.org&a=yes&ptr=no&a_colon=regular+hostnames&mx_colon=domain+names&ip4_colon=IP+addresses&include=example.com&all=yes&record_so_far=%22v%3Dspf1+a+~all%22&use_built_from_args=1
+
+mail.sizl.org. IN TXT "v=spf1 a ~all"
+
+
+

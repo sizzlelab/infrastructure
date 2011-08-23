@@ -48,11 +48,18 @@ def main():
     # stop slave
     exec_cmd(['mysqladmin', 'stop-slave'])
 
+    # create the dump dir on instance storage (will be removed on shutdown)
+    exec_cmd(['sudo', '/home/cos/bin/mk-dump-dir.sh'])
+
     # exec dump
-    dump_file = read_cmd(['/home/cos/bin/mysql-dump-exec.sh'] + DUMP_DATABASES)
+    dump_files = []
+    for db in DUMP_DATABASES:
+        dump_file = read_cmd(['/home/cos/bin/mysql-dump-exec.sh', db])
+        dump_files.append(dump_file.strip())
 
     # copy dumps to S3
-    exec_cmd(['s3cmd', 'put', dump_file.strip(), "s3://%s/" % S3_BUCKET])
+    for f in dump_files:
+        exec_cmd(['s3cmd', 'put', f, "s3://%s/" % S3_BUCKET])
 
 
 #--- helpers --
@@ -85,7 +92,7 @@ def exec_cmd(args):
 
 
 def end(code=0):
-    log = read_cmd(['cat', LOG_FILE])
+    log = read_cmd(['/home/cos/bin/get-last-log.sh', LOG_FILE])
 
     msg = MIMEText(log)
     msg['Subject'] = 'The contents of %s' % LOG_FILE

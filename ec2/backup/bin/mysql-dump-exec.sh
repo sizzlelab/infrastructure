@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DUMP_FILE=/home/cos/dump/sizl-production.sql.gz
+DUMP_FILE=/mnt/dump/$1-sizl.sql.gz
 
-mysqldump --databases $@ | gzip > $DUMP_FILE
+mysqldump --databases $1 | gzip > $DUMP_FILE
 echo $DUMP_FILE

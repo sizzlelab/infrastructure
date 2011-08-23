@@ -61,7 +61,7 @@ TYPE_PREFIXES = ['dat-', 'sys-']
 META_TAG_NAME = 'Name'
 META_TAG_PREFIX = 'bak-'
 
-DUMPER_INSTANCE_ID = 'i-65c34713'
+DUMPER_AMI_ID = 'ami-1b7e486f'
 
 
 def main(weekday):
@@ -103,7 +103,7 @@ def main(weekday):
         take_snapshot(vol_type, today_tag)
 
     # start up a dumper instance
-    exec_cmd(["ec2-start-instances", DUMPER_INSTANCE_ID])
+    exec_cmd(["ec2-run-instances", DUMPER_AMI_ID, "-k", "sizl-ubuntu1", "-g", "sizl-web", "-z", "eu-west-1b", "-t", "m1.small"])
 
 
 #--- helpers --
