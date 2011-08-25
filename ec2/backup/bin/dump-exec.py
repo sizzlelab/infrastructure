@@ -125,6 +125,7 @@ def end(code=0, do_shutdown=True):
 def get_config(**kwargs):
     # get the configuration
     # excepts a json encoded dict.
+    ret = {}
     try:
         f = open(CONFIG_FILENAME)
         json_str = f.read()
@@ -132,13 +133,14 @@ def get_config(**kwargs):
         ret = json.loads(json_str)
     except Exception, ex:
         logging.error("error: loading config failed: %s; assuming defaults: %s" % (ex, kwargs))
+        
 
     # add defaults from keyword arguments
     for k,v in kwargs.items():
         if not k in ret:
             ret[k] = v
     
-    
+    return ret
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
