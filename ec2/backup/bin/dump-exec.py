@@ -24,11 +24,11 @@ FROM_EMAIL_ADDRESS = 'dump-exec@sizl.org'
 TO_EMAIL_ADDRESS = 'sizl-aws@hiit.fi'
 EMAIL_WAIT_SECS = 10
 
+CONFIG = {}
 CONFIG_FILENAME = os.path.normpath(os.path.join(os.path.dirname(__file__), os.path.join('..', 'etc', 'dump-exec-config.json')))
 BIN_DIR = os.path.normpath(os.path.dirname(__file__))
 
-
-def backup(user_data):
+def backup():
     # start slave
     exec_cmd(['mysqladmin', 'start-slave'])
 
@@ -95,7 +95,7 @@ def exec_cmd(args):
         end(-22)
 
 
-def end(code=0, do_shutdown=True):
+def end(code=0):
     log = read_cmd([os.path.join(BIN_DIR, 'get-last-log.sh'), LOG_FILE])
 
     msg = MIMEText(log)
@@ -115,14 +115,14 @@ def end(code=0, do_shutdown=True):
 
     time.sleep(EMAIL_WAIT_SECS)
 
-    if do_shutdown:
+    if CONFIG['do_shutdown']:
         # shut the machine down
         exec_cmd(['sudo', '/sbin/shutdown', '-h', 'now'])
 
     exit(code)
 
 
-def get_config(**kwargs):
+def load_config(**kwargs):
     # get the configuration
     # excepts a json encoded dict.
     ret = {}
@@ -130,7 +130,7 @@ def get_config(**kwargs):
         f = open(CONFIG_FILENAME)
         json_str = f.read()
         f.close()
-        ret = json.loads(json_str)
+        CONFIG = json.loads(json_str)
     except Exception, ex:
         logging.error("error: loading config failed: %s; assuming defaults: %s" % (ex, kwargs))
         
@@ -138,9 +138,8 @@ def get_config(**kwargs):
     # add defaults from keyword arguments
     for k,v in kwargs.items():
         if not k in ret:
-            ret[k] = v
+            CONFIG[k] = v
     
-    return ret
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
@@ -152,13 +151,13 @@ if __name__ == '__main__':
     time.sleep(START_DELAY_SECS)
 
     logging.info('--- dump-exec START ---')
-    config = get_config(do_backup=True, do_shutdown=True)
-    if config['do_backup']:
+    load_config(do_backup=True, do_shutdown=True)
+    if CONFIG['do_backup']:
         backup()
     else:
         logging.info('backup not done, do_backup is False')
     logging.info('--- dump-exec END (OK) ---')
 
-    end(0, config['do_shutdown'])
+    end(0)
 
 
