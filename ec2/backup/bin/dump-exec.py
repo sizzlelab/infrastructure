@@ -126,8 +126,9 @@ def get_config(**kwargs):
     # get the configuration
     # excepts a json encoded dict.
     try:
-        with f = open(CONFIG_FILENAME) as f:
-            json_str = f.read()
+        f = open(CONFIG_FILENAME)
+        json_str = f.read()
+        f.close()
         ret = json.loads(json_str)
     except Exception, ex:
         logging.error("error: loading config failed: %s; assuming defaults: %s" % (ex, kwargs))
