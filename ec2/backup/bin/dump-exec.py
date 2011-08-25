@@ -13,6 +13,7 @@ from email.mime.text import MIMEText
 DUMP_DATABASES = ['commonservices_production', 'research_production_alpha', 'kassi_production']
 S3_BUCKET = 'sizl-db-dumps'
 
+START_DELAY_SECS = 30
 POLL_WAIT_SECS = 5
 SLAVE_STATUS_TIMEOUT_SECS = 1800
 
@@ -23,8 +24,10 @@ FROM_EMAIL_ADDRESS = 'dump-exec@sizl.org'
 TO_EMAIL_ADDRESS = 'sizl-aws@hiit.fi'
 EMAIL_WAIT_SECS = 10
 
+CONFIG_FILENAME = '/home/cos/infrastructure/ec2/backup/etc/dump-exec-config.json'
 
-def main():
+
+def backup(user_data):
     # start slave
     exec_cmd(['mysqladmin', 'start-slave'])
 
@@ -91,7 +94,7 @@ def exec_cmd(args):
         end(-22)
 
 
-def end(code=0):
+def end(code=0, do_shutdown=True):
     log = read_cmd(['/home/cos/bin/get-last-log.sh', LOG_FILE])
 
     msg = MIMEText(log)
@@ -111,11 +114,29 @@ def end(code=0):
 
     time.sleep(EMAIL_WAIT_SECS)
 
-    # shut the machine down
-    exec_cmd(['sudo', '/sbin/shutdown', '-h', 'now'])
+    if do_shutdown:
+        # shut the machine down
+        exec_cmd(['sudo', '/sbin/shutdown', '-h', 'now'])
 
     exit(code)
 
+
+def get_config(**kwargs):
+    # get the configuration
+    # excepts a json encoded dict.
+    try:
+        with f = open(CONFIG_FILENAME) as f:
+            json_str = f.read()
+        ret = json.loads(json_str)
+    except Exception, ex:
+        logging.error("error: loading config failed: %s; assuming defaults: %s" % (ex, kwargs))
+
+    # add defaults from keyword arguments
+    for k,v in kwargs.items():
+        if not k in ret:
+            ret[k] = v
+    
+    
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
@@ -123,8 +144,17 @@ if __name__ == '__main__':
                         format='%(asctime)s [%(threadName)s] %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
 
+    # delay a bit before starting
+    time.sleep(START_DELAY_SECS)
+
     logging.info('--- dump-exec START ---')
-    main()
+    config = get_config(do_backup=True, do_shutdown=True)
+    if config['do_backup']:
+        backup()
+    else:
+        logging.info('backup not done, do_backup is False')
     logging.info('--- dump-exec END (OK) ---')
 
-    end(0)
+    end(0, config['do_shutdown'])
+
+

@@ -132,13 +132,13 @@ export EC2_AMITOOL_HOME=~/ec2-ami-tools
 export EC2_URL=https://ec2.eu-west-1.amazonaws.com
 ----
 
-# create bin directory
-mkdir bin
+#clone the git repository
+git clone git://github.com/sizzlelab/infrastructure.git
 
 # edit /etc/rc.local
 sudo vi /etc/rc.local 
 --
-su - cos -c "/home/cos/bin/dump-exec.sh"
+su - cos -c "/home/cos/infrastructure/ec2/backup/bin/dump-exec.sh"
 exit 0
 --
 

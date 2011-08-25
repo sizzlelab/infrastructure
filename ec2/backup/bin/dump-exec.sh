@@ -2,4 +2,7 @@
 
 . $HOME/.profile
 
-$HOME/bin/dump-exec.py
+cd $HOME
+git pull origin master
+
+$HOME/infrastructure/ec2/backup/bin/dump-exec.py

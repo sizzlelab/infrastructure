@@ -54,14 +54,14 @@ PERIOD_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Weekly1', 'Wee
 # backup type constants
 TYPE_DAT = 0
 TYPE_SYS = 1
-VOL_IDS = ['vol-f0109d99', 'vol-560a873f']
+VOL_IDS = ['vol-5c28b935', 'vol-79651510']
 TYPE_PREFIXES = ['dat-', 'sys-']
 
 # metadata tag constants
 META_TAG_NAME = 'Name'
 META_TAG_PREFIX = 'bak-'
 
-DUMPER_AMI_ID = 'ami-1b7e486f'
+DUMPER_INSTANCE_ID = 'i-65c34713'
 
 
 def main(weekday):
@@ -103,18 +103,19 @@ def main(weekday):
         take_snapshot(vol_type, today_tag)
 
     # start up a dumper instance
-    exec_cmd(["ec2-run-instances", DUMPER_AMI_ID, "-k", "sizl-ubuntu1", "-g", "sizl-web", "-z", "eu-west-1b", "-t", "m1.small"])
+    exec_cmd(["ec2-start-instances", DUMPER_INSTANCE_ID])
 
 
 #--- helpers --
 def take_snapshot(vol_type, tag):
     if vol_type == TYPE_SYS:
-        snap_id = read_cmd(["sudo", "ec2-consistent-snapshot", "--aws-credentials-file", "/home/cos/.aws/sizl-aws@hiit.fi", "--region", "eu-west-1", VOL_IDS[TYPE_SYS]], '^snap-[0-9a-z]+')
+        snap_id = read_cmd(["sudo", "ec2-consistent-snapshot", "--aws-credentials-file", "/home/cos/.aws/sizl-aws@hiit.fi", "--region", "eu-west-1", VOL_IDS[TYPE_SYS]], 'snap-[0-9a-z]+')
         #snap_id = read_cmd(["ec2-create-image", CURRENT_INSTANCE_ID, "-n", tag, "-d", "Backup AMI image", "--no-reboot"], 'IMAGE\tami-[0-9a-z]+')
         #snap_id = snap_id.strip().split("\t")[-1]
     else:
-        snap_id = read_cmd(["sudo", "ec2-consistent-snapshot", "--aws-credentials-file", "/home/cos/.aws/sizl-aws@hiit.fi", "--region", "eu-west-1", "--freeze-filesystem", "/data", "--mysql", "--mysql-defaults-file", "/home/cos/.mysql/ec2-snapshot-mysql.cnf", VOL_IDS[TYPE_DAT]], '^snap-[0-9a-z]+')
+        snap_id = read_cmd(["sudo", "ec2-consistent-snapshot", "--aws-credentials-file", "/home/cos/.aws/sizl-aws@hiit.fi", "--region", "eu-west-1", "--freeze-filesystem", "/data", "--mysql", "--mysql-defaults-file", "/home/cos/.mysql/ec2-snapshot-mysql.cnf", VOL_IDS[TYPE_DAT]], 'snap-[0-9a-z]+')
 
+    snap_id = snap_id.strip().split("\n")[-1]
     # TODO: poll here to make sure that snapshot has been completed, or timeout to error?
 
     # attach the tag
@@ -125,7 +126,7 @@ def read_cmd(args, result_re=None):
         logging.info(" ".join(args))
         (data, err) = subprocess.Popen(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE).communicate()
         if result_re:
-            if not re.match(result_re, data):
+            if not re.search(result_re, data):
                 raise Exception("Result does not match %s: %s, %s" % (result_re, err, data)) 
 
         return data
