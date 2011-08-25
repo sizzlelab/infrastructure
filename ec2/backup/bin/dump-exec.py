@@ -7,13 +7,14 @@ import time
 import subprocess
 import re
 import logging
+import json
 import smtplib
 from email.mime.text import MIMEText
 
 DUMP_DATABASES = ['commonservices_production', 'research_production_alpha', 'kassi_production']
 S3_BUCKET = 'sizl-db-dumps'
 
-START_DELAY_SECS = 30
+START_DELAY_SECS = 1
 POLL_WAIT_SECS = 5
 SLAVE_STATUS_TIMEOUT_SECS = 1800
 
@@ -26,6 +27,7 @@ EMAIL_WAIT_SECS = 10
 
 CONFIG = {}
 CONFIG_FILENAME = os.path.normpath(os.path.join(os.path.dirname(__file__), os.path.join('..', 'etc', 'dump-exec-config.json')))
+print CONFIG_FILENAME
 BIN_DIR = os.path.normpath(os.path.dirname(__file__))
 
 def backup():
@@ -140,6 +142,7 @@ def load_config(**kwargs):
         if not k in ret:
             CONFIG[k] = v
     
+    return CONFIG
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
@@ -150,9 +153,10 @@ if __name__ == '__main__':
     # delay a bit before starting
     time.sleep(START_DELAY_SECS)
 
+    print 
     logging.info('--- dump-exec START ---')
-    load_config(do_backup=True, do_shutdown=True)
-    if CONFIG['do_backup']:
+    config = load_config(do_backup=True, do_shutdown=True)
+    if config['do_backup']:
         backup()
     else:
         logging.info('backup not done, do_backup is False')
