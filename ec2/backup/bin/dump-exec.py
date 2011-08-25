@@ -14,7 +14,7 @@ from email.mime.text import MIMEText
 DUMP_DATABASES = ['commonservices_production', 'research_production_alpha', 'kassi_production']
 S3_BUCKET = 'sizl-db-dumps'
 
-START_DELAY_SECS = 1
+START_DELAY_SECS = 30
 POLL_WAIT_SECS = 5
 SLAVE_STATUS_TIMEOUT_SECS = 1800
 
