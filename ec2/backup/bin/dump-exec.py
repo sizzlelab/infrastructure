@@ -24,7 +24,8 @@ FROM_EMAIL_ADDRESS = 'dump-exec@sizl.org'
 TO_EMAIL_ADDRESS = 'sizl-aws@hiit.fi'
 EMAIL_WAIT_SECS = 10
 
-CONFIG_FILENAME = '/home/cos/infrastructure/ec2/backup/etc/dump-exec-config.json'
+CONFIG_FILENAME = os.path.normpath(os.path.join(os.path.dirname(__file__), os.path.join('..', 'etc', 'dump-exec-config.json')))
+BIN_DIR = os.path.normpath(os.path.dirname(__file__))
 
 
 def backup(user_data):
@@ -34,7 +35,7 @@ def backup(user_data):
     # poll mysql until it has synchronized
     start_ts = time.time()
     while True:
-        status = read_cmd(['/home/cos/bin/mysql-slave-status.sh'])
+        status = read_cmd([os.path.join(BIN_DIR, 'mysql-slave-status.sh')])
         if status.strip() == '0':
             logging.info('database syncronized.')
             break
@@ -52,12 +53,12 @@ def backup(user_data):
     exec_cmd(['mysqladmin', 'stop-slave'])
 
     # create the dump dir on instance storage (will be removed on shutdown)
-    exec_cmd(['sudo', '/home/cos/bin/mk-dump-dir.sh'])
+    exec_cmd(['sudo', os.path.join(BIN_DIR, 'mk-dump-dir.sh')])
 
     # exec dump
     dump_files = []
     for db in DUMP_DATABASES:
-        dump_file = read_cmd(['/home/cos/bin/mysql-dump-exec.sh', db])
+        dump_file = read_cmd([os.path.join(BIN_DIR, 'mysql-dump-exec.sh'), db])
         dump_files.append(dump_file.strip())
 
     # copy dumps to S3
@@ -95,7 +96,7 @@ def exec_cmd(args):
 
 
 def end(code=0, do_shutdown=True):
-    log = read_cmd(['/home/cos/bin/get-last-log.sh', LOG_FILE])
+    log = read_cmd([os.path.join(BIN_DIR, 'get-last-log.sh'), LOG_FILE])
 
     msg = MIMEText(log)
     msg['Subject'] = 'The contents of %s' % LOG_FILE

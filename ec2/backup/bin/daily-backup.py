@@ -63,6 +63,9 @@ META_TAG_PREFIX = 'bak-'
 
 DUMPER_INSTANCE_ID = 'i-65c34713'
 
+# basically ../log/dump-exec.log relative to this file
+LOG_FILE = os.path.normpath(os.path.join(os.path.dirname(__file__), os.path.join('..', 'log', 'dump-exec.log')))
+
 
 def main(weekday):
     # get information about current tags
@@ -173,7 +176,7 @@ def parse_tags(data):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         # basically ../log/daily-backup.log relative to this file
-                        filename=os.path.normpath(os.path.join(os.path.dirname(__file__), os.path.join('..', 'log', 'daily-backup.log'))),
+                        filename=LOG_FILE,
                         format='%(asctime)s [%(threadName)s] %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
 
