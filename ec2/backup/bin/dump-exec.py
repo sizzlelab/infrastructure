@@ -148,7 +148,6 @@ def load_config(**kwargs):
     except Exception, ex:
         logging.error("error: loading config failed: %s; assuming defaults: %s" % (ex, kwargs))
 
-    logging.info("Using config: %s" % CONFIG)
     # add defaults from keyword arguments
     for k,v in kwargs.items():
         if not k in CONFIG:
@@ -167,7 +166,7 @@ if __name__ == '__main__':
     logging.info('--- dump-exec START ---')
 
     #read in configuration
-    load_config(do_backup=True, do_shutdown=False)
+    load_config(do_backup=True, do_shutdown=True)
 
     # delay a bit before starting
     logging.info("sleeping for %s secs..." % START_DELAY_SECS)
