@@ -46,7 +46,7 @@ def backup():
     start_ts = time.time()
     while True:
         status = read_cmd([os.path.join(BIN_DIR, 'mysql-slave-status.sh')])
-        logging.info("Slave is behind by: %s" status)
+        logging.info("Slave is behind by: %s" % status)
 
         if status.strip() == '0':
             logging.info('database syncronized.')
@@ -148,6 +148,7 @@ def load_config(**kwargs):
     except Exception, ex:
         logging.error("error: loading config failed: %s; assuming defaults: %s" % (ex, kwargs))
 
+    logging.info("Using config: %s" % CONFIG)
     # add defaults from keyword arguments
     for k,v in kwargs.items():
         if not k in CONFIG:
