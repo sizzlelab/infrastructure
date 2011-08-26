@@ -11,6 +11,7 @@ import json
 import smtplib
 from email.mime.text import MIMEText
 
+MASTER_INSTANCE_ID = 'i-83be19f5'
 DUMP_DATABASES = ['commonservices_production', 'research_production_alpha', 'kassi_production']
 S3_BUCKET = 'sizl-db-dumps'
 
@@ -27,10 +28,17 @@ EMAIL_WAIT_SECS = 10
 
 CONFIG = {}
 CONFIG_FILENAME = os.path.normpath(os.path.join(os.path.dirname(__file__), os.path.join('..', 'etc', 'dump-exec-config.json')))
-print CONFIG_FILENAME
+
 BIN_DIR = os.path.normpath(os.path.dirname(__file__))
 
 def backup():
+    if not CONFIG['do_backup']:
+        logging.info('backup not done, do_backup is False')
+        return
+
+    # make sure the slave is linked to the master by internal IP address
+    exec_cmd([os.path.join(BIN_DIR, 'mysql-link-master.sh')])
+
     # start slave
     exec_cmd(['mysqladmin', 'start-slave'])
 
@@ -38,12 +46,14 @@ def backup():
     start_ts = time.time()
     while True:
         status = read_cmd([os.path.join(BIN_DIR, 'mysql-slave-status.sh')])
+        logging.info("Slave is behind by: %s" status)
+
         if status.strip() == '0':
             logging.info('database syncronized.')
             break
 
         # check for timeout
-        if time.time() == (start_ts + SLAVE_STATUS_TIMEOUT_SECS):
+        if time.time() >= (start_ts + SLAVE_STATUS_TIMEOUT_SECS):
             logging.error('abort: database synchronization timeout')
             logging.info('--- dump-exec END (ABORT) ---')
             end(-1)
@@ -125,6 +135,8 @@ def end(code=0):
 
 
 def load_config(**kwargs):
+    global CONFIG
+
     # get the configuration
     # excepts a json encoded dict.
     ret = {}
@@ -135,14 +147,15 @@ def load_config(**kwargs):
         CONFIG = json.loads(json_str)
     except Exception, ex:
         logging.error("error: loading config failed: %s; assuming defaults: %s" % (ex, kwargs))
-        
 
     # add defaults from keyword arguments
     for k,v in kwargs.items():
-        if not k in ret:
+        if not k in CONFIG:
             CONFIG[k] = v
     
+    logging.info("Using config: %s" % CONFIG)
     return CONFIG
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
@@ -150,18 +163,20 @@ if __name__ == '__main__':
                         format='%(asctime)s [%(threadName)s] %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
 
+    logging.info('--- dump-exec START ---')
+
+    #read in configuration
+    load_config(do_backup=True, do_shutdown=False)
+
     # delay a bit before starting
+    logging.info("sleeping for %s secs..." % START_DELAY_SECS)
     time.sleep(START_DELAY_SECS)
 
-    print 
-    logging.info('--- dump-exec START ---')
-    config = load_config(do_backup=True, do_shutdown=True)
-    if config['do_backup']:
-        backup()
-    else:
-        logging.info('backup not done, do_backup is False')
+    # execute the backup
+    backup()
     logging.info('--- dump-exec END (OK) ---')
 
+    # clean up and finish
     end(0)
 
 
