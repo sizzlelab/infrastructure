@@ -36,8 +36,11 @@ def backup():
         logging.info('backup not done, do_backup is False')
         return
 
+    # stop slave in case it's active from a previous run
+    exec_cmd(['mysqladmin', 'stop-slave'])
+
     # make sure the slave is linked to the master by internal IP address
-    exec_cmd([os.path.join(BIN_DIR, 'mysql-link-master.sh')])
+    exec_cmd([os.path.join(BIN_DIR, 'mysql-link-master.sh')], True)
 
     # start slave
     exec_cmd(['mysqladmin', 'start-slave'])
@@ -97,14 +100,15 @@ def read_cmd(args, result_re=None):
         end(-21)
 
 
-def exec_cmd(args):
+def exec_cmd(args, no_quit=False):
     try:
         logging.info(" ".join(args))
         subprocess.check_call(args)
     except Exception, ex:
         logging.error("abort: exec_cmd failed: %s" % ex)
         logging.info('--- dump-exec END (ABORT) ---')
-        end(-22)
+        if not no_quit:
+            end(-22)
 
 
 def end(code=0):
