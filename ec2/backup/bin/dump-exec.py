@@ -40,7 +40,7 @@ def backup():
     exec_cmd(['mysqladmin', 'stop-slave'])
 
     # make sure the slave is linked to the master by internal IP address
-    exec_cmd([os.path.join(BIN_DIR, 'mysql-link-master.sh')], True)
+    exec_cmd([os.path.join(BIN_DIR, 'mysql-link-master.sh', MASTER_INSTANCE_ID)], True)
 
     # start slave
     exec_cmd(['mysqladmin', 'start-slave'])
