@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DUMP_FILE=/mnt/dump/$1-sizl.sql.gz
+OUT_FILE="$2/$1.sql.gz"
 
-mysqldump --databases $1 | gzip > $DUMP_FILE
-echo $DUMP_FILE
+mysqldump --single-transaction --quick $1 | gzip > $OUT_FILE
+echo $OUT_FILE

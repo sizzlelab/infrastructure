@@ -61,8 +61,6 @@ TYPE_PREFIXES = ['dat-', 'sys-']
 META_TAG_NAME = 'Name'
 META_TAG_PREFIX = 'bak-'
 
-DUMPER_INSTANCE_ID = 'i-65c34713'
-
 # basically ../log/dump-exec.log relative to this file
 LOG_FILE = os.path.normpath(os.path.join(os.path.dirname(__file__), os.path.join('..', 'log', 'dump-exec.log')))
 
@@ -105,9 +103,6 @@ def main(weekday):
         # create new snapshot and add today's tag
         take_snapshot(vol_type, today_tag)
 
-    # start up a dumper instance
-    exec_cmd(["ec2-start-instances", DUMPER_INSTANCE_ID])
-
 
 #--- helpers --
 def take_snapshot(vol_type, tag):
@@ -123,6 +118,7 @@ def take_snapshot(vol_type, tag):
 
     # attach the tag
     exec_cmd(["ec2-create-tags", snap_id.strip(), "--tag", "%s=%s" % (META_TAG_NAME, tag)])
+
 
 def read_cmd(args, result_re=None):
     try:

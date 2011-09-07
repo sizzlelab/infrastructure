@@ -1,7 +1,5 @@
 #!/bin/bash
 
-DUMP_DIR=/mnt/dump
-
-if [ ! -d "$DUMP_DIR" ]; then
-    mkdir /mnt/dump && chown cos.cos /mnt/dump
+if [ ! -d "$1" ]; then
+    mkdir $1 && chown cos.cos $1
 fi
