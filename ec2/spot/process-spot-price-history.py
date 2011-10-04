@@ -23,16 +23,6 @@ MEAN = 'mean'
 
 TS_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
-def parse_timestamp(ts):
-
-    ts_datetime = ts[:19]
-    ts_timezone = ts[19:]
-    utc_offset = int(ts_timezone) / 100
-    ret = ret + timedelta(hours=utc_offset)
-    return ret
-
-
-
 def main(filename, on_demand_price):
     data = {}
 
@@ -54,6 +44,9 @@ def main(filename, on_demand_price):
             line = f.readline()
 
     # get the highs for each day sorted by ts
+    highs = {}
+    n = 0
+    total = 0
     for product in data.keys():
         for type in data[product].keys():
             tss = data[product][type].keys()
@@ -64,14 +57,25 @@ def main(filename, on_demand_price):
             for ts in tss:
                 if not ts[:10] == cur_ts:
                     if prices:
-                        print "%s\t%s\t%s" % (cur_ts, on_demand_price, max(prices))
+                        highs[cur_ts] = max(prices)
+                        total = total + highs[cur_ts]
+                        n = n + 1
 
                     cur_ts = ts[:10]
                     prices = []
                     for zone in data[product][type][ts].keys():
                         prices.append(float(data[product][type][ts][zone]))
-            print "%s\t%s\t%s" % (cur_ts, on_demand_price, max(prices))
 
+            highs[cur_ts] = max(prices)
+            total = total + highs[cur_ts]
+            n = n + 1
+
+    # print out highs with on-demand price and mean price
+    avg = total / n
+    tss = highs.keys()
+    tss.sort()
+    for ts in tss:
+        print "%s\t%s\t%s\t%s" % (ts, on_demand_price, highs[ts], avg)
 
 
 if __name__ == '__main__':
